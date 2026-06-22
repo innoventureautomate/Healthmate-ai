@@ -109,6 +109,20 @@ export default function WorkoutsPage() {
               </Link>
             </CardContent>
           </Card>
+
+          <Card className="bg-gradient-to-r from-slate-600 to-blue-700 text-white">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-lg sm:text-xl">Live Posture Analyzer</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <p className="mb-4 text-sm sm:text-base">
+                Monitor your sitting posture in real time — protect your back during long meetings.
+              </p>
+              <Link href="/workouts/LiveWorkout/LivePosture">
+                <Button variant="secondary" className="w-full sm:w-auto">Start Posture Check</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

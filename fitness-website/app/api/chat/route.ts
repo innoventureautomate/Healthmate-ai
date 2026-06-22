@@ -5,8 +5,14 @@ import { MemoryClient } from 'mem0ai';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/firebase-config';
 
-// Initialize the mem0 client
-const memoryClient = new MemoryClient({ apiKey: process.env.MEM0_API_KEY });
+// Lazy singleton — only created when a request arrives, not at build time
+let memoryClient: MemoryClient | null = null;
+function getMemoryClient(): MemoryClient {
+  if (!memoryClient) {
+    memoryClient = new MemoryClient({ apiKey: process.env.MEM0_API_KEY! });
+  }
+  return memoryClient;
+}
 
 export async function POST(req: Request) {
   try {
@@ -62,10 +68,10 @@ export async function POST(req: Request) {
     if (userId) {
       try {
         // Add the latest user message to memory
-        await memoryClient.add([{ role: "user", content: lastMessage }], { user_id: userId });
-        
+        await getMemoryClient().add([{ role: "user", content: lastMessage }], { user_id: userId });
+
         // Search for relevant past memories based on the current query
-        const memories = await memoryClient.search(lastMessage, { user_id: userId });
+        const memories = await getMemoryClient().search(lastMessage, { user_id: userId });
         if (memories && memories.length > 0) {
           // Extract memory text
           memoryContext = memories.map((m: any) => m.memory).join('\n');

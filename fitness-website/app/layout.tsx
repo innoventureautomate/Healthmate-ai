@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { AuthProvider } from "@/lib/auth-context"
 import SiteHeader from "@/components/site-header"
 import SiteFooter from "@/components/site-footer"
+import PwaRegister from "@/components/pwa-register"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -13,6 +14,15 @@ export const metadata: Metadata = {
   title: "HealthMate - Your all-in-one health partner",
   description: "Track your workouts, nutrition, and fitness progress all in one place.",
   generator: 'v0.dev',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "HealthMate",
+  },
+  formatDetection: { telephone: false },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
 }
 
 export const viewport: Viewport = {
@@ -20,6 +30,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: "#0f766e",
 }
 
 export default function RootLayout({
@@ -37,6 +48,7 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <SiteFooter />
             </div>
+            <PwaRegister />
           </AuthProvider>
         </ThemeProvider>
       </body>

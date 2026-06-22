@@ -59,7 +59,7 @@
     "framer-motion": "^12.23.24",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
-    "mem0ai": "^3.0.2",
+    "mem0ai": "^3.0.9",
     "next": "^16.1.6",
     "next-themes": "latest",
     "react": "^18.3.1",
