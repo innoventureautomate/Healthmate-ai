@@ -28,7 +28,7 @@ export default function LoginPage() {
       setError("")
       const { user } = await signInWithEmailAndPassword(auth, email, password)
       await ensureUserProfile(user)
-      router.push("/profile")
+      router.push("/")
     } catch (err: any) {
       console.error("Login error", err)
       setError(err.message || "Unable to sign in. Please try again.")
@@ -43,7 +43,7 @@ export default function LoginPage() {
       setError("")
       const { user } = await signInWithPopup(auth, provider)
       await ensureUserProfile(user)
-      router.push("/profile")
+      router.push("/")
     } catch (err: any) {
       if (err.code !== "auth/popup-closed-by-user") {
         console.error("Google sign-in error", err)
@@ -63,9 +63,9 @@ export default function LoginPage() {
               <Activity className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold text-center">Sign in</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-bold text-center">Sign in to PostureSense</CardTitle>
           <CardDescription className="text-center text-sm sm:text-base">
-            Welcome back! Access your personalized HealthMate dashboard.
+            Welcome back! Access your posture dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 sm:p-6 pt-0">

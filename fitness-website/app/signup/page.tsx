@@ -62,7 +62,7 @@ export default function SignupPage() {
         email,
       });
 
-      router.push("/profile");
+      router.push("/");
     } catch (error: any) {
       console.error("Signup error:", error);
       let errorMessage = error.message || "Unable to create account. Try again later.";
@@ -85,7 +85,7 @@ export default function SignupPage() {
       setError("");
       const { user } = await signInWithPopup(auth, provider);
       await ensureUserProfile(user);
-      router.push("/profile");
+      router.push("/");
     } catch (error: any) {
       if (error.code !== "auth/popup-closed-by-user") {
         console.error("Google signup error:", error);
@@ -109,7 +109,7 @@ export default function SignupPage() {
             Create an account
           </CardTitle>
           <CardDescription className="text-center text-sm sm:text-base">
-            Join HealthMate and unlock personalized AI coaching.
+            Join PostureSense — AI-powered posture analysis for clinics and gyms.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 p-4 sm:p-6 pt-0">
