@@ -8,7 +8,7 @@ import { getSessionsByProvider, PostureSession } from "@/lib/db/sessions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, Activity, AlertTriangle } from "lucide-react";
+import { TrendingUp, Activity, AlertTriangle, Clock, Eye, Ruler } from "lucide-react";
 
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 80 ? "bg-green-500" : score >= 60 ? "bg-yellow-500" : "bg-red-500";
@@ -129,30 +129,82 @@ export default function ReportsPage() {
           {displayed.length === 0 ? (
             <p className="text-sm text-muted-foreground py-4 text-center">No sessions recorded yet.</p>
           ) : (
-            <div className="divide-y max-h-72 overflow-y-auto">
+            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
               {displayed.map((s) => {
-                const client = clients.find((c) => c.id === s.clientId);
+                const client  = clients.find((c) => c.id === s.clientId);
+                const score   = s.postureScore;
+                const scoreColor = score >= 80 ? "text-green-600 bg-green-50 border-green-200"
+                                 : score >= 60 ? "text-yellow-700 bg-yellow-50 border-yellow-200"
+                                 :               "text-red-600 bg-red-50 border-red-200";
+                const dateStr = s.date?.toDate
+                  ? new Date(s.date.toDate()).toLocaleString("en-IN", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })
+                  : "—";
+                const mins = Math.floor(s.durationSec / 60);
+                const secs = s.durationSec % 60;
+                const durationStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+                const viewLabel = s.viewMode === "side" ? "↔ Side" : s.viewMode === "front" ? "⊙ Front" : s.viewMode === "back" ? "⊙ Back" : "—";
+
                 return (
-                  <div key={s.id} className="flex items-center justify-between py-2 text-sm">
-                    <div>
-                      <p className="font-medium">{client?.name ?? "Unknown"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {s.viewMode ?? "—"} view · {Math.round(s.durationSec / 60)}min
-                      </p>
+                  <div key={s.id} className="rounded-xl border p-4 space-y-3 bg-white">
+                    {/* Header row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100 text-teal-700 font-bold text-sm shrink-0">
+                          {client?.name?.[0] ?? "?"}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{client?.name ?? "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">{dateStr}</p>
+                        </div>
+                      </div>
+                      <div className={`text-xl font-bold px-3 py-1 rounded-lg border ${scoreColor}`}>
+                        {score}%
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {s.alertCount > 0 && (
-                        <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">
-                          {s.alertCount} alert{s.alertCount !== 1 ? "s" : ""}
-                        </Badge>
+
+                    {/* Score bar */}
+                    <div className="h-1.5 rounded-full bg-gray-100">
+                      <div
+                        className={`h-1.5 rounded-full transition-all ${score >= 80 ? "bg-green-500" : score >= 60 ? "bg-yellow-500" : "bg-red-500"}`}
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+
+                    {/* Metrics row */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        <span className="font-medium text-foreground">{durationStr}</span>
+                        <span>duration</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Eye className="h-3 w-3 shrink-0" />
+                        <span className="font-medium text-foreground">{viewLabel}</span>
+                        <span>view</span>
+                      </div>
+                      {s.neckAngle != null && s.neckAngle > 0 && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Ruler className="h-3 w-3 shrink-0" />
+                          <span className={`font-medium ${s.neckAngle > 40 ? "text-red-600" : "text-green-600"}`}>{s.neckAngle}°</span>
+                          <span>neck angle</span>
+                        </div>
                       )}
-                      <span className={`font-bold text-sm ${s.postureScore >= 70 ? "text-green-600" : "text-orange-500"}`}>
-                        {s.postureScore}%
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {s.date?.toDate ? new Date(s.date.toDate()).toLocaleDateString() : "—"}
-                      </span>
+                      {s.torsoAngle != null && s.torsoAngle > 0 && (
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
+                          <Ruler className="h-3 w-3 shrink-0" />
+                          <span className={`font-medium ${s.torsoAngle > 10 ? "text-red-600" : "text-green-600"}`}>{s.torsoAngle}°</span>
+                          <span>torso angle</span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Alerts */}
+                    {s.alertCount > 0 && (
+                      <div className="flex items-center gap-2 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-lg px-3 py-1.5">
+                        <AlertTriangle className="h-3 w-3 shrink-0" />
+                        <span><strong>{s.alertCount} posture alert{s.alertCount !== 1 ? "s" : ""}</strong> triggered during session</span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

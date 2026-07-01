@@ -385,7 +385,10 @@ export default function LivePosture() {
           postureScore,
           alertCount,
           durationSec,
-          viewMode: viewMode === "unknown" ? "side" : viewMode,
+          viewMode:    viewMode === "unknown" ? "side" : viewMode,
+          neckAngle:   neckAngle  || undefined,
+          torsoAngle:  torsoAngle || undefined,
+          shoulderDiff: shoulderDiff || undefined,
         });
       }
     } catch (e) {
