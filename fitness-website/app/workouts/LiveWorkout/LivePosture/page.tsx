@@ -9,6 +9,8 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { auth, db, rtdb } from "@/firebase-config";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref as rtdbRef, get as rtdbGet, set as rtdbSet } from "firebase/database";
+import { getClientByEmail } from "@/lib/db/clients";
+import { savePostureSession } from "@/lib/db/sessions";
 
 // ── Thresholds ────────────────────────────────────────────────────────────────
 const NECK_THRESHOLD       = 40;    // degrees  (side view)
@@ -371,20 +373,31 @@ export default function LivePosture() {
     if (!user) return;
     const durationSec = sessionStartRef.current
       ? Math.round((Date.now() - sessionStartRef.current) / 1000) : 0;
+
+    // Save to psPostureSessions so provider reports can read it
+    try {
+      const email = user.email ?? "";
+      const clientDoc = email ? await getClientByEmail(email) : null;
+      if (clientDoc?.providerId) {
+        await savePostureSession({
+          clientId:    clientDoc.id,
+          providerId:  clientDoc.providerId,
+          postureScore,
+          alertCount,
+          durationSec,
+          viewMode: viewMode === "unknown" ? "side" : viewMode,
+        });
+      }
+    } catch (e) {
+      console.error("[Session] psPostureSessions save failed:", e);
+    }
+
+    // Also save to legacy workouts collection
     const calories = Math.round(durationSec * 0.02);
     await addDoc(collection(db, "workouts"), {
       userId: user.uid, type: "posture_check",
       durationSec, postureScore, alertCount, calories, date: serverTimestamp(),
-    });
-    const statsRef = rtdbRef(rtdb, `workoutStats/${user.uid}`);
-    const snap = await rtdbGet(statsRef);
-    const prev = snap.exists() ? snap.val() : {};
-    await rtdbSet(statsRef, {
-      totalSessions: (prev.totalSessions || 0) + 1,
-      totalDuration: (prev.totalDuration || 0) + durationSec,
-      totalCaloriesBurned: (prev.totalCaloriesBurned || 0) + calories,
-      lastWorkout: new Date().toISOString(),
-    });
+    }).catch(() => {});
   };
 
   useEffect(() => { return () => { stopAll(); }; }, []);

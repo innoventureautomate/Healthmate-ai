@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getProviderByOwner } from "@/lib/db/providers";
@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, CheckCircle2 } from "lucide-react";
+import { Clock, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const CATEGORY_COLORS: Record<ExerciseCategory, string> = {
@@ -22,6 +22,10 @@ const CATEGORY_COLORS: Record<ExerciseCategory, string> = {
 };
 
 export default function AssignPage() {
+  return <Suspense><AssignPageInner /></Suspense>;
+}
+
+function AssignPageInner() {
   const { profile } = useAuth();
   const searchParams = useSearchParams();
   const preselect    = searchParams.get("client");
@@ -55,22 +59,26 @@ export default function AssignPage() {
     setAssigned(new Set(client?.assignedExercises ?? []));
   };
 
-  const handleToggle = async (exerciseId: string, checked: boolean) => {
+  const handleToggle = async (exerciseId: string, checked: boolean, exName: string) => {
     if (!selectedId) return;
     setSaving(exerciseId);
-    await toggleExercise(selectedId, exerciseId, checked);
-    setAssigned((prev) => {
-      const next = new Set(prev);
-      checked ? next.add(exerciseId) : next.delete(exerciseId);
-      return next;
-    });
-    // Update clients list cache
-    setClients((prev) => prev.map((c) => {
-      if (c.id !== selectedId) return c;
-      const set = new Set(c.assignedExercises);
-      checked ? set.add(exerciseId) : set.delete(exerciseId);
-      return { ...c, assignedExercises: Array.from(set) };
-    }));
+    try {
+      await toggleExercise(selectedId, exerciseId, checked);
+      setAssigned((prev) => {
+        const next = new Set(prev);
+        checked ? next.add(exerciseId) : next.delete(exerciseId);
+        return next;
+      });
+      setClients((prev) => prev.map((c) => {
+        if (c.id !== selectedId) return c;
+        const set = new Set(c.assignedExercises);
+        checked ? set.add(exerciseId) : set.delete(exerciseId);
+        return { ...c, assignedExercises: Array.from(set) };
+      }));
+      toast({ title: checked ? `✅ "${exName}" assigned` : `❌ "${exName}" removed` });
+    } catch (err: any) {
+      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+    }
     setSaving(null);
   };
 
@@ -151,12 +159,14 @@ export default function AssignPage() {
                             <span className="text-xs text-muted-foreground capitalize">• {ex.difficulty}</span>
                           </div>
                         </div>
-                        <Switch
-                          checked={isAssigned}
-                          disabled={isSaving}
-                          onCheckedChange={(v) => handleToggle(ex.id, v)}
-                          className="data-[state=checked]:bg-teal-600 ml-4"
-                        />
+                        {isSaving
+                          ? <Loader2 className="h-4 w-4 animate-spin text-teal-600 ml-4" />
+                          : <Switch
+                              checked={isAssigned}
+                              onCheckedChange={(v) => handleToggle(ex.id, v, ex.name)}
+                              className="data-[state=checked]:bg-teal-600 ml-4"
+                            />
+                        }
                       </div>
                     );
                   })}
