@@ -55,3 +55,12 @@ export async function toggleExercise(clientId: string, exerciseId: string, assig
   assign ? current.add(exerciseId) : current.delete(exerciseId);
   await updateDoc(doc(db, COL, clientId), { assignedExercises: Array.from(current) });
 }
+
+export async function getClientByEmail(email: string): Promise<Client | null> {
+  const snap = await getDocs(
+    query(collection(db, COL), where("email", "==", email))
+  );
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() } as Client;
+}

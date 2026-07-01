@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { getClientsByProvider } from "@/lib/db/clients";
+import { getClientByEmail } from "@/lib/db/clients";
 import { getAllExercises, Exercise } from "@/lib/db/exercises";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,17 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!profile) return;
-    // For client users, profile.providerId holds the client doc ID
-    // Simple approach: load all exercises and filter by assigned list stored on the user doc
+    if (!profile?.email) return;
     (async () => {
-      const assignedIds: string[] = profile.assignedExercises ?? [];
+      const [clientDoc, all] = await Promise.all([
+        getClientByEmail(profile.email),
+        getAllExercises(),
+      ]);
+      const assignedIds: string[] =
+        clientDoc?.assignedExercises?.length
+          ? clientDoc.assignedExercises
+          : (profile.assignedExercises ?? []);
       if (assignedIds.length > 0) {
-        const all = await getAllExercises();
         setAssignedExercises(all.filter((e) => assignedIds.includes(e.id)));
       }
       setLoading(false);

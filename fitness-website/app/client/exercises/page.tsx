@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { getAllExercises, Exercise } from "@/lib/db/exercises";
+import { getClientByEmail } from "@/lib/db/clients";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +30,19 @@ export default function ClientExercisesPage() {
   const [loading,  setLoading]    = useState(true);
 
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?.email) return;
     (async () => {
-      const assignedIds: string[] = profile.assignedExercises ?? [];
-      const all = await getAllExercises();
+      const [clientDoc, all] = await Promise.all([
+        getClientByEmail(profile.email),
+        getAllExercises(),
+      ]);
+      const assignedIds: string[] =
+        clientDoc?.assignedExercises?.length
+          ? clientDoc.assignedExercises
+          : (profile.assignedExercises ?? []);
       const assigned = assignedIds.length > 0
         ? all.filter((e) => assignedIds.includes(e.id))
-        : all; // fallback: show all if nothing assigned yet
+        : all;
       setExercises(assigned);
       setLoading(false);
     })();
