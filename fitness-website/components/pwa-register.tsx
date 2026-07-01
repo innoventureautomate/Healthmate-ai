@@ -46,7 +46,7 @@ export default function PwaRegister() {
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-xl border bg-background shadow-lg px-4 py-3 max-w-sm w-full mx-4">
       <span className="text-2xl">📱</span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold leading-tight">Install HealthMate</p>
+        <p className="text-sm font-semibold leading-tight">Install PostureSense</p>
         <p className="text-xs text-muted-foreground">
           Add to home screen for the best experience
         </p>

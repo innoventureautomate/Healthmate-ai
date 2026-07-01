@@ -37,9 +37,9 @@ export default function SiteHeader() {
           <Link href="/" className="flex items-center space-x-2">
             <Activity className="h-6 w-6 text-primary" />
             <div>
-              <span className="font-bold text-xl md:text-2xl">HealthMate</span>
+              <span className="font-bold text-xl md:text-2xl">PostureSense</span>
               <p className="text-xs text-muted-foreground hidden md:block">
-                Your all-in-one health partner
+                AI posture analysis platform
               </p>
             </div>
           </Link>

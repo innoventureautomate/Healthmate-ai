@@ -9,10 +9,10 @@ export default function SiteFooter() {
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center space-x-2">
               <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              <h3 className="text-base sm:text-lg font-bold">HealthMate</h3>
+              <h3 className="text-base sm:text-lg font-bold">PostureSense</h3>
             </div>
             <p className="text-xs sm:text-sm text-gray-400">
-              Your all-in-one health partner for tracking workouts, nutrition, and progress.
+              AI-powered posture analysis for physio clinics and gyms.
             </p>
             <div className="flex space-x-3 sm:space-x-4">
               <Link href="#" className="text-gray-400 hover:text-primary">
@@ -110,7 +110,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="mt-6 sm:mt-8 pt-6 sm:pt-8 border-t border-gray-800 text-center text-xs sm:text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} HealthMate. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} PostureSense. All rights reserved.</p>
         </div>
       </div>
     </footer>

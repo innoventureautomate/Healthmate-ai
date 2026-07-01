@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
       <div className="prose prose-invert max-w-none space-y-6 text-foreground/90">
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold text-foreground">1. Information We Collect</h2>
-          <p>We collect information you provide directly to us, such as your name, email address, fitness goals, dietary preferences, and any biometric data (height, weight) you choose to log in the HealthMate app.</p>
+          <p>We collect information you provide directly to us, such as your name, email address, fitness goals, dietary preferences, and any biometric data (height, weight) you choose to log in the PostureSense app.</p>
         </section>
         <section className="space-y-3">
           <h2 className="text-2xl font-semibold text-foreground">2. How We Use Your Information</h2>
