@@ -7,8 +7,9 @@ import { getClientsByProvider } from "@/lib/db/clients";
 import { getSessionsByProvider, PostureSession } from "@/lib/db/sessions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, Activity, AlertTriangle, Clock, Eye, Ruler } from "lucide-react";
+import { TrendingUp, Activity, AlertTriangle, Clock, Eye, Ruler, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 
 function ScoreBar({ score }: { score: number }) {
   const color = score >= 80 ? "bg-green-500" : score >= 60 ? "bg-yellow-500" : "bg-red-500";
@@ -24,10 +25,41 @@ function ScoreBar({ score }: { score: number }) {
 
 export default function ReportsPage() {
   const { profile } = useAuth();
-  const [sessions,  setSessions]  = useState<PostureSession[]>([]);
-  const [clients,   setClients]   = useState<any[]>([]);
-  const [filter,    setFilter]    = useState<string>("all");
-  const [loading,   setLoading]   = useState(true);
+  const [sessions,   setSessions]  = useState<PostureSession[]>([]);
+  const [clients,    setClients]   = useState<any[]>([]);
+  const [filter,     setFilter]    = useState<string>("all");
+  const [loading,    setLoading]   = useState(true);
+  const [summaries,  setSummaries] = useState<Record<string, string>>({});
+  const [sumLoading, setSumLoading] = useState<Record<string, boolean>>({});
+  const [expanded,   setExpanded]  = useState<Record<string, boolean>>({});
+
+  const getSummary = async (s: PostureSession, clientName: string) => {
+    if (summaries[s.id]) { setExpanded((p) => ({ ...p, [s.id]: !p[s.id] })); return; }
+    setSumLoading((p) => ({ ...p, [s.id]: true }));
+    try {
+      const res = await fetch("/api/session-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName,
+          postureScore: s.postureScore,
+          alertCount:   s.alertCount,
+          durationSec:  s.durationSec,
+          viewMode:     s.viewMode,
+          neckAngle:    s.neckAngle,
+          torsoAngle:   s.torsoAngle,
+          shoulderDiff: s.shoulderDiff,
+          date: s.date?.toDate ? new Date(s.date.toDate()).toLocaleDateString() : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.summary) {
+        setSummaries((p) => ({ ...p, [s.id]: data.summary }));
+        setExpanded((p) => ({ ...p, [s.id]: true }));
+      }
+    } catch (e) { console.error(e); }
+    setSumLoading((p) => ({ ...p, [s.id]: false }));
+  };
 
   useEffect(() => {
     if (!profile?.uid) return;
@@ -203,6 +235,41 @@ export default function ReportsPage() {
                       <div className="flex items-center gap-2 text-xs bg-orange-50 text-orange-700 border border-orange-200 rounded-lg px-3 py-1.5">
                         <AlertTriangle className="h-3 w-3 shrink-0" />
                         <span><strong>{s.alertCount} posture alert{s.alertCount !== 1 ? "s" : ""}</strong> triggered during session</span>
+                      </div>
+                    )}
+
+                    {/* AI Summary */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 text-xs"
+                      onClick={() => getSummary(s, client?.name ?? "Client")}
+                      disabled={sumLoading[s.id]}
+                    >
+                      {sumLoading[s.id]
+                        ? <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" />Generating AI Summary…</>
+                        : summaries[s.id]
+                          ? expanded[s.id]
+                            ? <><ChevronUp className="h-3 w-3 mr-1.5" />Hide AI Summary</>
+                            : <><ChevronDown className="h-3 w-3 mr-1.5" />Show AI Summary</>
+                          : <><Sparkles className="h-3 w-3 mr-1.5" />Generate AI Clinical Summary</>
+                      }
+                    </Button>
+
+                    {summaries[s.id] && expanded[s.id] && (
+                      <div className="rounded-lg border border-purple-200 bg-purple-50 p-4 text-xs text-gray-800 space-y-2">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+                          <span className="font-semibold text-purple-700 text-sm">AI Clinical Summary</span>
+                          <Badge variant="outline" className="text-xs ml-auto border-purple-300 text-purple-600">LLaMA 70B</Badge>
+                        </div>
+                        <div className="whitespace-pre-wrap leading-relaxed">
+                          {summaries[s.id].split(/\*\*(.+?)\*\*/).map((part, i) =>
+                            i % 2 === 1
+                              ? <strong key={i} className="text-gray-900 block mt-3 mb-1 text-sm">{part}</strong>
+                              : <span key={i}>{part}</span>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
