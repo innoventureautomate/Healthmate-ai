@@ -1,7 +1,14 @@
 import { User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { ref as rtdbRef, set as rtdbSet } from "firebase/database";
 import { db, rtdb } from "@/firebase-config";
+
+export async function getUserByEmail(email: string): Promise<{ uid: string; role?: string; name?: string } | null> {
+  const snap = await getDocs(query(collection(db, "users"), where("email", "==", email)));
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { uid: d.id, ...d.data() } as { uid: string; role?: string; name?: string };
+}
 
 /**
  * Ensures a user profile exists in both Firestore and Realtime Database.
@@ -19,13 +26,8 @@ export async function ensureUserProfile(user: User, fallbackName?: string) {
     await setDoc(userDocRef, {
       name,
       email: user.email,
+      role: "client",
       createdAt: new Date(),
-      workoutsCompleted: 0,
-      caloriesBurned: 0,
-      streak: 0,
-      weeklyGoal: 5,
-      calorieGoal: 2500,
-      weightLoss: 0,
     });
   }
 

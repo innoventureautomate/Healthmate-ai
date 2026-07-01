@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getAllProviders, createProvider, updateProvider, deleteProvider, Provider, ProviderType } from "@/lib/db/providers";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/firebase-config";
+import { getUserByEmail } from "@/lib/user-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,25 +18,27 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Loader2, Building2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Building2, AlertCircle } from "lucide-react";
 
-const EMPTY_FORM = { name: "", type: "physio" as ProviderType, email: "", phone: "", address: "", ownerId: "" };
+const EMPTY_FORM = { name: "", type: "physio" as ProviderType, email: "", phone: "", address: "", ownerEmail: "" };
 
 export default function AdminProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [open,      setOpen]      = useState(false);
   const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [editing,   setEditing]   = useState<Provider | null>(null);
   const [form,      setForm]      = useState(EMPTY_FORM);
 
   const load = async () => { setProviders(await getAllProviders()); setLoading(false); };
   useEffect(() => { load(); }, []);
 
-  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm(EMPTY_FORM); setSaveError(""); setOpen(true); };
   const openEdit = (p: Provider) => {
     setEditing(p);
-    setForm({ name: p.name, type: p.type, email: p.email, phone: p.phone ?? "", address: p.address ?? "", ownerId: p.ownerId });
+    setForm({ name: p.name, type: p.type, email: p.email, phone: p.phone ?? "", address: p.address ?? "", ownerEmail: p.email });
+    setSaveError("");
     setOpen(true);
   };
 
@@ -44,17 +47,27 @@ export default function AdminProvidersPage() {
   const handleSave = async () => {
     if (!form.name || !form.email) return;
     setSaving(true);
-    if (editing) {
-      await updateProvider(editing.id, form);
-    } else {
-      const id = await createProvider({ ...form, isActive: true });
-      // Also set the user's role to provider in Firestore if ownerId provided
-      if (form.ownerId) {
-        await setDoc(doc(db, "users", form.ownerId), { role: "provider" }, { merge: true });
+    setSaveError("");
+    try {
+      if (editing) {
+        await updateProvider(editing.id, { name: form.name, type: form.type, email: form.email, phone: form.phone, address: form.address });
+      } else {
+        // Look up owner UID by email
+        const ownerEmail = form.ownerEmail.trim() || form.email.trim();
+        const userRecord = await getUserByEmail(ownerEmail);
+        if (!userRecord) {
+          setSaveError(`No account found for "${ownerEmail}". Ask the provider to sign up first.`);
+          setSaving(false);
+          return;
+        }
+        await createProvider({ name: form.name, type: form.type, email: form.email, phone: form.phone, address: form.address, ownerId: userRecord.uid, isActive: true });
+        await setDoc(doc(db, "users", userRecord.uid), { role: "provider" }, { merge: true });
       }
+      await load();
+      setOpen(false);
+    } catch (e: any) {
+      setSaveError(e.message);
     }
-    await load();
-    setOpen(false);
     setSaving(false);
   };
 
@@ -109,12 +122,24 @@ export default function AdminProvidersPage() {
                   <Label>Address</Label>
                   <Input value={form.address} onChange={(e) => set("address", e.target.value)} />
                 </div>
-                <div className="col-span-2 space-y-1">
-                  <Label>Owner Firebase UID</Label>
-                  <Input value={form.ownerId} onChange={(e) => set("ownerId", e.target.value)} placeholder="Firebase Auth UID of the admin user" />
-                  <p className="text-xs text-muted-foreground">Found in Firebase console → Authentication</p>
-                </div>
+                {!editing && (
+                  <div className="col-span-2 space-y-1">
+                    <Label>Provider Login Email *</Label>
+                    <Input
+                      type="email"
+                      value={form.ownerEmail}
+                      onChange={(e) => set("ownerEmail", e.target.value)}
+                      placeholder="Same email the provider used to sign up"
+                    />
+                    <p className="text-xs text-muted-foreground">The provider must have signed up at /signup first</p>
+                  </div>
+                )}
               </div>
+              {saveError && (
+                <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 rounded-md p-2">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />{saveError}
+                </div>
+              )}
               <Button className="w-full bg-teal-600 hover:bg-teal-700 mt-2" onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {saving ? "Saving…" : editing ? "Save Changes" : "Add Provider"}

@@ -48,13 +48,8 @@ export default function SignupPage() {
       await setDoc(doc(db, "users", user.uid), {
         name,
         email,
+        role: "client",
         createdAt: new Date(),
-        workoutsCompleted: 0,
-        caloriesBurned: 0,
-        streak: 0,
-        weeklyGoal: 5,
-        calorieGoal: 2500,
-        weightLoss: 0,
       });
 
       await rtdbSet(ref(rtdb, `users/${user.uid}`), {
