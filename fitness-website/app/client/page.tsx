@@ -10,6 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Dumbbell, ArrowRight, Clock } from "lucide-react";
 
+const LIVE_LINKS: Record<string, string> = {
+  "Live Bicep Curl":      "/workouts/LiveWorkout/LiveBicepCurl",
+  "Live Lunge Analysis":  "/workouts/LiveWorkout/LiveLunge",
+  "Live Plank Check":     "/workouts/LiveWorkout/LivePlank",
+  "Live Push-up Counter": "/workouts/LiveWorkout/LivePushup",
+  "Posture Check Session":"/workouts/LiveWorkout/LivePosture",
+};
+
 export default function ClientDashboard() {
   const { profile } = useAuth();
   const [assignedExercises, setAssignedExercises] = useState<Exercise[]>([]);
@@ -71,19 +79,22 @@ export default function ClientDashboard() {
         <div>
           <h2 className="text-base font-semibold mb-3">Today&apos;s Programme</h2>
           <div className="space-y-2">
-            {assignedExercises.slice(0, 4).map((ex) => (
-              <div key={ex.id} className="flex items-center justify-between p-3 rounded-lg border bg-white hover:bg-gray-50">
-                <div>
-                  <p className="text-sm font-medium">{ex.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">{ex.duration} min</span>
-                    <Badge variant="outline" className="text-xs ml-1 capitalize">{ex.difficulty}</Badge>
+            {assignedExercises.slice(0, 4).map((ex) => {
+              const href = LIVE_LINKS[ex.name] ?? "/client/exercises";
+              return (
+                <Link key={ex.id} href={href} className="flex items-center justify-between p-3 rounded-lg border bg-white hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div>
+                    <p className="text-sm font-medium">{ex.name}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Clock className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{ex.duration} min</span>
+                      <Badge variant="outline" className="text-xs ml-1 capitalize">{ex.difficulty}</Badge>
+                    </div>
                   </div>
-                </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              </div>
-            ))}
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </Link>
+              );
+            })}
             {assignedExercises.length > 4 && (
               <Button variant="ghost" size="sm" className="w-full" asChild>
                 <Link href="/client/exercises">+{assignedExercises.length - 4} more exercises</Link>
