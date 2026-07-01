@@ -21,9 +21,11 @@ const COL = "psClients";
 
 export async function getClientsByProvider(providerId: string): Promise<Client[]> {
   const snap = await getDocs(
-    query(collection(db, COL), where("providerId", "==", providerId), orderBy("name"))
+    query(collection(db, COL), where("providerId", "==", providerId))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Client));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Client))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getClientById(id: string): Promise<Client | null> {

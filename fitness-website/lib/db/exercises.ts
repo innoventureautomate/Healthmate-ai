@@ -23,8 +23,10 @@ export interface Exercise {
 const COL = "exercises";
 
 export async function getAllExercises(): Promise<Exercise[]> {
-  const snap = await getDocs(query(collection(db, COL), orderBy("category")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Exercise));
+  const snap = await getDocs(collection(db, COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Exercise))
+    .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
 }
 
 export async function getExerciseById(id: string): Promise<Exercise | null> {

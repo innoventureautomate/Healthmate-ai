@@ -30,14 +30,18 @@ export async function savePostureSession(
 
 export async function getSessionsByClient(clientId: string, max = 20): Promise<PostureSession[]> {
   const snap = await getDocs(
-    query(collection(db, COL), where("clientId", "==", clientId), orderBy("date", "desc"), limit(max))
+    query(collection(db, COL), where("clientId", "==", clientId), limit(max))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PostureSession));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as PostureSession))
+    .sort((a, b) => (b.date?.seconds ?? 0) - (a.date?.seconds ?? 0));
 }
 
 export async function getSessionsByProvider(providerId: string, max = 100): Promise<PostureSession[]> {
   const snap = await getDocs(
-    query(collection(db, COL), where("providerId", "==", providerId), orderBy("date", "desc"), limit(max))
+    query(collection(db, COL), where("providerId", "==", providerId), limit(max))
   );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PostureSession));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as PostureSession))
+    .sort((a, b) => (b.date?.seconds ?? 0) - (a.date?.seconds ?? 0));
 }

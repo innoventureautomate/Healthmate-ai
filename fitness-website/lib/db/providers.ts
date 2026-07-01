@@ -21,8 +21,10 @@ export interface Provider {
 const COL = "psProviders";
 
 export async function getAllProviders(): Promise<Provider[]> {
-  const snap = await getDocs(query(collection(db, COL), orderBy("name")));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Provider));
+  const snap = await getDocs(collection(db, COL));
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Provider))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getProviderByOwner(ownerId: string): Promise<Provider | null> {
